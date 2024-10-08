@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:product_list_app/model/product_model.dart';
 import 'package:product_list_app/utils/erros/exception_handler.dart';
@@ -20,7 +19,6 @@ class ProductService {
       if (response.statusCode == 200) {
         // Parsing the response data
         final List<dynamic> productListData = response.data['products'];
-        log('Successfully fetched products');
 
         // Mapping the product data to a list of Product objects
         List<Product> products = productListData.map((productData) {

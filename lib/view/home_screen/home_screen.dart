@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:product_list_app/model/product_model.dart';
-import 'package:product_list_app/providers/cart_provider.dart';
+import 'package:product_list_app/services/sharedpf.dart';
 import 'package:product_list_app/view/cart_screen/cart_screen.dart';
 import 'package:product_list_app/view/login_screen/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:product_list_app/utils/shared_widgets/messenger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../providers/prodcuct_provider.dart';
+import 'widgets/product_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,11 +25,43 @@ class _HomeScreenState extends State<HomeScreen> {
     productProvider.addListener(() {
       if (productProvider.errorMessage != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          print(productProvider.errorMessage);
           Messenger.showSnackBar(message: productProvider.errorMessage ?? '');
         });
       }
     });
+  }
+
+  void showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                SharedPrefs.setLoggedOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const LoginScreen(),
+                  ),
+                  (Route<dynamic> route) => false,
+                );
+              },
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -56,13 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
               )),
           IconButton(
               onPressed: () {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const LoginScreen(),
-                  ),
-                  (route) => false,
-                );
+                showLogoutDialog(context);
               },
               icon: const Icon(
                 Icons.logout,
@@ -90,120 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-    );
-  }
-}
-
-class ProductCard extends StatelessWidget {
-  final Product product;
-
-  const ProductCard({Key? key, required this.product}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius:
-                const BorderRadius.horizontal(left: Radius.circular(12)),
-            child: Image.network(
-              product.imageUrl,
-              height: 120,
-              width: 120,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.title,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${product.price.toStringAsFixed(2)}',
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.blue[700],
-                        fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  QuantitySelector(product: product),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class QuantitySelector extends StatefulWidget {
-  final Product product;
-
-  const QuantitySelector({Key? key, required this.product}) : super(key: key);
-
-  @override
-  _QuantitySelectorState createState() => _QuantitySelectorState();
-}
-
-class _QuantitySelectorState extends State<QuantitySelector> {
-  int quantity = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final cartProvider = context.read<CartProvider>();
-
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.remove, size: 20),
-          onPressed: () {
-            if (quantity > 0) {
-              setState(() {
-                quantity--;
-              });
-              cartProvider.updateQuantity(widget.product, quantity);
-            }
-          },
-          color: Colors.blue[700],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.blue[700]!),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            quantity.toString(),
-            style: const TextStyle(fontSize: 14),
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.add, size: 20),
-          onPressed: () {
-            if (quantity < 10) {
-              setState(() {
-                quantity++;
-              });
-              cartProvider.addToCart(widget.product);
-            }
-          },
-          color: Colors.blue[700],
-        ),
-      ],
     );
   }
 }

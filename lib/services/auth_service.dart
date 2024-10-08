@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import '../model/login_responce.dart';
@@ -19,8 +18,6 @@ class AuthService {
   /// Throws [MainException] if an unexpected error occurs while processing.
   /// Throws a [DioException] if a network error occurs.
   Future<LoginResponse> login(String username, String password) async {
-    log(username);
-    log(password);
     try {
       // Making a POST request to the login API endpoint
       final response = await _dio.post(
@@ -40,12 +37,10 @@ class AuthService {
           data: response.data,
         );
       } else {
-        log('error from ehre');
         // Handle non-200 response codes with a custom error handler
         throw ExceptionHandlers.handleBadResponse(response);
       }
     } on DioException catch (e) {
-      log('error from ehre${e.toString()}');
       // Handle Dio-specific exceptions using the custom error handler
       throw ExceptionHandlers.handleDioExceptions(e);
     } catch (e) {
